@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace SamopalIndustries
+namespace SamopalIndustries.Entities.Exceptions
 {
     /// <summary>
     /// The exception that is thrown when LateBindingOption is set to DefaultCtor, but binded class doesn't have default constructor.

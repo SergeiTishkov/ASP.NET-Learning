@@ -1,6 +1,8 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SamopalIndustries;
+using SamopalIndustries.Entities;
+using SamopalIndustries.Entities.Exceptions;
 
 namespace SamopalDITest
 {
@@ -80,6 +82,7 @@ namespace SamopalDITest
         }
 
         // Should work correctly because args in creator delegate wasn't null 
+        // Testing of binding types to Func<object[], object>, i.e. with incoming args
         [TestMethod]
         public void SamopalDISeeCommentsIntTest05()
         {
@@ -98,7 +101,6 @@ namespace SamopalDITest
             di.BindDefault<IClass1>((args) =>
             {
                 IClass2 c2 = di.GetDefault<IClass2>();
-                IClass3 c3 = di.GetDefault<IClass3>();
                 IClass4 c4 = di.GetDefault<IClass4>(args);
 
                 return new Class1(c2, c4);
@@ -115,9 +117,45 @@ namespace SamopalDITest
             Assert.AreNotEqual(null, variable.Class2.Class3);
         }
 
-        // Should throw an ArgumentException because example = 0 isn't available
+        // Should work correctly because args in creator delegate wasn't null 
+        // Testing of binding types to Func<object>, i.e. without incoming args
         [TestMethod]
         public void SamopalDISeeCommentsIntTest06()
+        {
+            var di = new SamopalDI();
+
+            di.BindDefault<IClass5>(() => new Class5("Hello, Test!"));
+
+            di.BindDefault<IClass2, Class2>();
+            di.BindDefault<IClass3, Class3>();
+            di.BindDefault<IClass4>(() =>
+            {
+                IClass5 c5 = di.GetDefault<IClass5>();
+                return new Class4(c5);
+            });
+
+            di.BindDefault<IClass1>(() =>
+            {
+                IClass2 c2 = di.GetDefault<IClass2>();
+                IClass4 c4 = di.GetDefault<IClass4>();
+
+                return new Class1(c2, c4);
+            });
+
+            object[] arrayOfArgs = new object[] {  };
+
+            Type expected = typeof(Class1);
+            IClass1 variable = di.GetDefault<IClass1>(arrayOfArgs);
+            Type actual = variable.GetType();
+
+            Assert.AreEqual(expected, actual);
+            Assert.AreEqual("Hello, Test!", variable.Class4.Class5.SomeString);
+            Assert.AreNotEqual(null, variable.Class2.Class3);
+        }
+
+        // Should throw an ArgumentException because example = 0 isn't available
+        [TestMethod]
+        public void SamopalDISeeCommentsIntTest07()
         {
             var di = new SamopalDI();
 
@@ -133,7 +171,7 @@ namespace SamopalDITest
         // Class3's property Class4 is late binded by reflection
         // and auto binding by reflection occurs only by Defauld binding GetDefault()
         [TestMethod]
-        public void SamopalDISeeCommentsIntTest07()
+        public void SamopalDISeeCommentsIntTest08()
         {
             var di = new SamopalDI();
 
@@ -167,7 +205,7 @@ namespace SamopalDITest
         // should not throw any Exceptiom because 
         // all bindings will be correct
         [TestMethod]
-        public void SamopalDISeeCommentsIntTest08()
+        public void SamopalDISeeCommentsIntTest09()
         {
             var di = new SamopalDI();
 
@@ -209,7 +247,7 @@ namespace SamopalDITest
         // Should throw custom LateBindingException because we will try to invoke
         // Class 1 where isn't default ctor with LateBindingOptions.DefaultCtor.
         [TestMethod]
-        public void SamopalDISeeCommentsIntTest09()
+        public void SamopalDISeeCommentsIntTest10()
         {
             var di = new SamopalDI(LateBindingOptions.DefaultCtor);
 
@@ -223,7 +261,7 @@ namespace SamopalDITest
         // Also we will look if Class1 instance was created by minimal ctor
         // because it doesn't have default ctor
         [TestMethod]
-        public void SamopalDISeeCommentsIntTest10()
+        public void SamopalDISeeCommentsIntTest11()
         {
             var di = new SamopalDI(LateBindingOptions.DefaultOrMinCtor);
 
@@ -239,7 +277,7 @@ namespace SamopalDITest
         // Will look if Class1 instance was created by maximal ctor
         // because it doesn't have default ctor
         [TestMethod]
-        public void SamopalDISeeCommentsIntTest11()
+        public void SamopalDISeeCommentsIntTest12()
         {
             var di = new SamopalDI(LateBindingOptions.DefaultOrMaxCtor);
 
@@ -254,15 +292,27 @@ namespace SamopalDITest
             Assert.AreNotEqual(null, class1.Class4);
         }
 
-        //Should throw InvalidDelegateReturnTypeException
+        // Should throw InvalidDelegateReturnTypeException <- name of exception can speak for itself
         [TestMethod]
-        public void SamopalDISeeCommentsIntTest12()
+        public void SamopalDISeeCommentsIntTest13()
         {
             var di = new SamopalDI();
 
             di.BindDefault<IClass1>((args) => new Class3());
 
             Assert.ThrowsException<InvalidDelegateReturnTypeException>(() => di.GetDefault<IClass1>());
+        }
+
+        // Should throw NullReferenceException because class was binded to arguement delegate,
+        // but was invoked without arguements
+        [TestMethod]
+        public void SamopalDISeeCommentsIntTest14()
+        {
+            var di = new SamopalDI();
+
+            di.BindDefault<IClass5>((args) => new Class5((string)args[0]));
+
+            Assert.ThrowsException<NullReferenceException>(() => di.GetDefault<IClass5>());
         }
 
 

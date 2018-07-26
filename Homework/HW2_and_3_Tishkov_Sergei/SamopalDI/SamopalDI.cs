@@ -1,25 +1,26 @@
-﻿using System;
+﻿using SamopalIndustries.Entities;
+using SamopalIndustries.Entities.Exceptions;
+using SamopalIndustries.Entities.KeysAndValues;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Mail;
 using System.Reflection;
 
 namespace SamopalIndustries
 {
+
     /// <summary>
     /// Simple Dependency Injector.
     /// </summary>
     public class SamopalDI
     {
-        private IDictionary<(Type, int), (Type, Func<object[], object>)> _dict;
+        private Dictionary<Key, Value> _dict;
 
         /// <summary>
         /// Initializes a new instance of the SamopalDI class.
         /// </summary>
-        public SamopalDI()
+        public SamopalDI() : this(LateBindingOptions.MaxCtor)
         {
-            LateBindingOption = LateBindingOptions.MaxCtor;
-            _dict = new Dictionary<(Type, int), (Type, Func<object[], object>)>();
         }
 
         /// <summary>
@@ -29,7 +30,7 @@ namespace SamopalIndustries
         public SamopalDI(LateBindingOptions options)
         {
             LateBindingOption = options;
-            _dict = new Dictionary<(Type, int), (Type, Func<object[], object>)>();
+            _dict = new Dictionary<Key, Value>(new KeyComparer());
         }
 
         public LateBindingOptions LateBindingOption { get; set; }
@@ -42,7 +43,7 @@ namespace SamopalIndustries
         /// <typeparam name="TKey">Binding type.</typeparam>
         public void BindDefault<TKey>()
         {
-            Bind<TKey, TKey>(0, null, false);
+            Bind<TKey, TKey>(0, null, null, false);
         }
 
         /// <summary>
@@ -50,10 +51,21 @@ namespace SamopalIndustries
         /// Make sure returning object is convertable to TKey before binding.
         /// </summary>
         /// <typeparam name="TKey">Binding type.</typeparam>
-        /// <param name="creator">Delegate responsible for returning the instance of TKey.</param>
-        public void BindDefault<TKey>(Func<object[], object> creator)
+        /// <param name="creatorWOArgs">Delegate responsible for returning the instance of TKey.</param>
+        public void BindDefault<TKey>(Func<object> creatorWOArgs)
         {
-            Bind<TKey, TKey>(0, creator, false);
+            Bind<TKey, TKey>(0, creatorWOArgs, null, false);
+        }
+
+        /// <summary>
+        /// Binds returned by Func delegate object as a default value to class TKey.
+        /// Make sure returning object is convertable to TKey before binding.
+        /// </summary>
+        /// <typeparam name="TKey">Binding type.</typeparam>
+        /// <param name="creatorWithArgs">Delegate responsible for returning the instance of TKey.</param>
+        public void BindDefault<TKey>(Func<object[], object> creatorWithArgs)
+        {
+            Bind<TKey, TKey>(0, null, creatorWithArgs, false);
         }
 
         /// <summary>
@@ -66,7 +78,7 @@ namespace SamopalIndustries
         public void BindDefault<TKey, TValue>()
             where TValue : TKey
         {
-            Bind<TKey, TValue>(0, null, false);
+            Bind<TKey, TValue>(0, null, null, false);
         }
 
         /// <summary>
@@ -80,7 +92,35 @@ namespace SamopalIndustries
         /// <exception cref="ArgumentException"></exception>
         public void BindExample<TKey>(int example)
         {
-            Bind<TKey, TKey>(example, null, true);
+            Bind<TKey, TKey>(example, null, null, true);
+        }
+
+        /// <summary>
+        /// Binds returned by Func delegate object as a specific example value to class TKey.
+        /// If specific example is zero, ArgumentException will be thrown.
+        /// Make sure returning object is convertable to TKey before binding.
+        /// </summary>
+        /// <typeparam name="TKey">Binding type.</typeparam>
+        /// <param name="example">Specific example of this binding.</param>
+        /// <param name="creatorWOArgs">Delegate responsible for returning the instance of TKey.</param>
+        /// <exception cref="ArgumentException"></exception>
+        public void BindExample<TKey>(int example, Func<object> creatorWOArgs)
+        {
+            Bind<TKey, TKey>(example, creatorWOArgs, null, true);
+        }
+
+        /// <summary>
+        /// Binds returned by Func delegate object as a specific example value to class TKey.
+        /// If specific example is zero, ArgumentException will be thrown.
+        /// Make sure returning object is convertable to TKey before binding.
+        /// </summary>
+        /// <typeparam name="TKey">Binding type.</typeparam>
+        /// <param name="example">Specific example of this binding.</param>
+        /// <param name="creatorWithArgs">Delegate responsible for returning the instance of TKey.</param>
+        /// <exception cref="ArgumentException"></exception>
+        public void BindExample<TKey>(int example, Func<object[], object> creatorWithArgs)
+        {
+            Bind<TKey, TKey>(example, null, creatorWithArgs, true);
         }
 
         /// <summary>
@@ -96,21 +136,7 @@ namespace SamopalIndustries
         public void BindExample<TKey, TValue>(int example)
             where TValue : TKey
         {
-            Bind<TKey, TValue>(example, null, true);
-        }
-
-        /// <summary>
-        /// Binds returned by Func delegate object as a specific example value to class TKey.
-        /// If specific example is zero, ArgumentException will be thrown.
-        /// Make sure returning object is convertable to TKey before binding.
-        /// </summary>
-        /// <typeparam name="TKey">Binding type.</typeparam>
-        /// <param name="example">Specific example of this binding.</param>
-        /// <param name="creator">Delegate responsible for returning the instance of TKey.</param>
-        /// <exception cref="ArgumentException"></exception>
-        public void BindExample<TKey>(int example, Func<object[], object> creator)
-        {
-            Bind<TKey, TKey>(example, creator, true);
+            Bind<TKey, TValue>(example, null, null, true);
         }
 
         /// <summary>
@@ -169,7 +195,7 @@ namespace SamopalIndustries
             return GetAndConvert<TKey>(example, args);
         }
 
-        private void Bind<TKey, TValue>(int example, Func<object[], object> creator, bool isExampleBind)
+        private void Bind<TKey, TValue>(int example, Func<object> creatorWOArgs, Func<object[], object> creatorWithArgs, bool isExampleBind)
             where TValue : TKey
         {
             if (isExampleBind && example == 0)
@@ -177,16 +203,16 @@ namespace SamopalIndustries
                 throw new ArgumentException("Zero example is reserved for default bind and not available for binding new examples manually.");
             }
 
-            Type key = typeof(TKey);
-            Type value = typeof(TValue);
+            Key key = new Key(typeof(TKey), example);
+            Value value = new Value(typeof(TValue), creatorWOArgs, creatorWithArgs);
 
-            if (_dict.ContainsKey((key, example)))
+            if (_dict.ContainsKey(key))
             {
-                _dict[(key, example)] = (value, creator);
+                _dict[key] = value;
             }
             else
             {
-                _dict.Add((key, example), (value, creator));
+                _dict.Add(key, value);
             }
         }
 
@@ -202,10 +228,11 @@ namespace SamopalIndustries
 
         private object Get(Type keyType, int example, object[] args)
         {
-            (Type, Func<object[], object>) value = default((Type, Func<object[], object>));
+            Key key = new Key(keyType, example);
+            Value value;
             try
             {
-                value = _dict[(keyType, example)];
+                value = _dict[key];
             }
             catch(KeyNotFoundException e)
             {
@@ -214,13 +241,18 @@ namespace SamopalIndustries
                 else
                     throw new ArgumentException($"You didn't do the {example} specific example bind of {keyType.FullName}", e);
             }
-            if (value.Item2 == null)
+
+            if(value.CreatorWOArgs != null)
             {
-                return GetByReflection(value.Item1);
+                return value.CreatorWOArgs();
+            }
+            if (value.CreatorWithArgs != null)
+            {
+                return value.CreatorWithArgs(args);
             }
             else
             {
-                return value.Item2(args);
+                return GetByReflection(value.Type);
             }
         }
 
@@ -242,7 +274,7 @@ namespace SamopalIndustries
 
         private ConstructorInfo GetConstructor(Type type)
         {
-            List<ConstructorInfo> ctors = type.GetConstructors().ToList();
+            List<ConstructorInfo> ctors = type.GetConstructors().Where(info => info.IsPublic).ToList();
             ctors.Sort(CompareCtorInfo);
             ConstructorInfo result = null;
 

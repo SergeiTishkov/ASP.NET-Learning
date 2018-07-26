@@ -1,4 +1,4 @@
-﻿namespace SamopalIndustries
+﻿namespace SamopalIndustries.Entities
 {
     /// <summary>
     /// Kind of constructor to late binding new instances.

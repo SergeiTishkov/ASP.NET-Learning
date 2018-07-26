@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace SamopalIndustries
+namespace SamopalIndustries.Entities.Exceptions
 {
     /// <summary>
     /// The exception that is thrown when object returned by the delegate isn't convertible to binded type.
