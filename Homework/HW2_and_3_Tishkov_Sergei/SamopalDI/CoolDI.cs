@@ -10,16 +10,16 @@ using System.Threading.Tasks;
 
 namespace SamopalIndustries
 {
-    class SamopalDI_Dev
+    class CoolDI
     {
-        private Dictionary<Key, Value> _dict;
+        private Dictionary<Key, Value_CoolDI> _dict;
 
         private Key _lastBind;
 
         /// <summary>
         /// Initializes a new instance of the SamopalDI class.
         /// </summary>
-        public SamopalDI_Dev() : this(LateBindingOptions.MaxCtor)
+        public CoolDI() : this(LateBindingOptions.MaxCtor)
         {
         }
 
@@ -27,41 +27,15 @@ namespace SamopalIndustries
         /// Initializes a new instance of the SamopalDI class by using the specified LateBindingOptions object.
         /// </summary>
         /// <param name="options">Choose the kind of constructor that will be used in late binding process.</param>
-        public SamopalDI_Dev(LateBindingOptions options)
+        public CoolDI(LateBindingOptions options)
         {
             LateBindingOption = options;
-            _dict = new Dictionary<Key, Value>(new KeyComparer());
+            _dict = new Dictionary<Key, Value_CoolDI>(new KeyComparer());
         }
 
         public LateBindingOptions LateBindingOption { get; set; }
 
-        public SamopalDI_Dev BindDefault<TKey>()
-        {
-            BindDef<TKey>();
-            return this;
-        }
-
-        public void ToSelf()
-        {
-            _dict[_lastBind] = new Value(_lastBind.KeyType, null, null);
-        }
-
-        public void To<TValue>()
-        {
-            _dict[_lastBind] = new Value(typeof(TValue), null, null);
-        }
-
-        public void ToDelegateWOArgs<TValue>(Func<object> creatorWOArgs)
-        {
-            _dict[_lastBind] = new Value(typeof(TValue), creatorWOArgs, null);
-        }
-
-        public void ToDelegateWithArgs<TValue>(Func<object> creatorWOArgs)
-        {
-            _dict[_lastBind] = new Value(typeof(TValue), creatorWOArgs, null);
-        }
-
-        private void BindDef<TKey>()
+        public CoolDI BindDefault<TKey>()
         {
             Key key = new Key(typeof(TKey), 0);
 
@@ -75,46 +49,58 @@ namespace SamopalIndustries
             }
 
             _lastBind = key;
+            return this;
         }
 
-
-
-
-        private void Bind<TKey, TValue>(int example, Func<object> creatorWOArgs, Func<object[], object> creatorWithArgs, bool isExampleBind)
-            where TValue : TKey
+        public void ToSelf()
         {
-            if (isExampleBind && example == 0)
-            {
-                throw new ArgumentException("Zero example is reserved for default bind and not available for binding new examples manually.");
-            }
+            _dict[_lastBind] = new Value_CoolDI(_lastBind.KeyType, null);
+        }
 
-            Key key = new Key(typeof(TKey), example);
-            Value value = new Value(typeof(TValue), creatorWOArgs, creatorWithArgs);
+        public void To<TValue>()
+        {
+            _dict[_lastBind] = new Value_CoolDI(typeof(TValue), null);
+        }
 
-            if (_dict.ContainsKey(key))
-            {
-                _dict[key] = value;
-            }
-            else
-            {
-                _dict.Add(key, value);
-            }
+        public void ToDelegateWOArgs<TValue>(Func<TValue> creatorWOArgs)
+        {
+            _dict[_lastBind] = new Value_CoolDI(null, creatorWOArgs);
+        }
+
+        public void ToDelegateWithArgs<TValue>(Func<object[], TValue> creatorWOArgs)
+        {
+            _dict[_lastBind] = new Value_CoolDI(null, creatorWOArgs);
+        }
+
+        public TKey GetDefault<TKey>()
+        {
+            return GetAndConvert<TKey>(0, null);
+        }
+
+        public TKey GetDefault<TKey>(params object[] args)
+        {
+            return GetAndConvert<TKey>(0, args);
+        }
+
+        public TKey GetExample<TKey>(int example)
+        {
+            return GetAndConvert<TKey>(example, null);
+        }
+
+        public TKey GetExample<TKey>(int example, params object[] args)
+        {
+            return GetAndConvert<TKey>(example, args);
         }
 
         private TKey GetAndConvert<TKey>(int example, object[] args)
         {
-            object result = Get(typeof(TKey), example, args);
-            if (!(result is TKey))
-            {
-                throw new InvalidDelegateReturnTypeException($"Your delegate return type isn't convertible to {typeof(TKey).FullName}.");
-            }
-            return (TKey)result;
+            return (TKey)Get(typeof(TKey), example, args);
         }
 
         private object Get(Type keyType, int example, object[] args)
         {
             Key key = new Key(keyType, example);
-            Value value;
+            Value_CoolDI value;
             try
             {
                 value = _dict[key];
@@ -127,13 +113,16 @@ namespace SamopalIndustries
                     throw new ArgumentException($"You didn't do the {example} specific example bind of {keyType.FullName}", e);
             }
 
-            if (value.CreatorWOArgs != null)
+            if (value.Creator != null)
             {
-                return value.CreatorWOArgs();
-            }
-            if (value.CreatorWithArgs != null)
-            {
-                return value.CreatorWithArgs(args);
+                if(args == null)
+                {
+                    return value.Creator.DynamicInvoke();
+                }
+                else
+                {
+                    return value.Creator.DynamicInvoke(args);
+                }
             }
             else
             {
