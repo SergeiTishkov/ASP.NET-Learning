@@ -17,7 +17,7 @@ namespace AutoMailSenderApp
             IFileHandler handler = InstantiateDefaultFileHandlerDI();
             handler.Enable();
 
-            while (true)
+            while (Console.ReadKey(true).Key != ConsoleKey.Escape)
             {
             }
         }
