@@ -14,11 +14,6 @@ namespace AutoMailSenderApp
     {
         private static void Main(string[] args)
         {
-            StartProgram();
-        }
-
-        private static void StartProgram()
-        {
             IFileHandler handler = InstantiateDefaultFileHandlerDI();
             handler.Enable();
 
