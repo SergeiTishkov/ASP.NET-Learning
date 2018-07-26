@@ -315,6 +315,23 @@ namespace SamopalDITest
             Assert.ThrowsException<NullReferenceException>(() => di.GetDefault<IClass5>());
         }
 
+        [TestMethod]
+        public void SamopalDISeeCommentsIntTest15()
+        {
+            Func<int> intFunc = () => 5;
+            Func<string> strFunc = () => "Test";
+
+            object[] objects = new object[] { intFunc, strFunc };
+
+            Assert.AreEqual(5, ((Delegate)objects[0]).DynamicInvoke());
+            Assert.AreEqual("Test", ((Delegate)objects[1]).DynamicInvoke());
+
+            Func<string, int, string> func3 = (str, integer) => str + integer.ToString();
+            object obj = (object)func3;
+
+            Assert.AreEqual("Test5", ((Delegate)obj).DynamicInvoke(((Delegate)objects[1]).DynamicInvoke(), ((Delegate)objects[0]).DynamicInvoke())); // TargetParameterCountException
+        }
+
 
         public interface IClass1
         {

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SamopalIndustries.Entities.KeysAndValues
 {
-    internal struct Value
+    internal class Value
     {
         internal Type Type { get; }
 

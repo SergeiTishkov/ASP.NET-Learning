@@ -8,7 +8,6 @@ using System.Reflection;
 
 namespace SamopalIndustries
 {
-
     /// <summary>
     /// Simple Dependency Injector.
     /// </summary>
