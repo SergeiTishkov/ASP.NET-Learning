@@ -42,6 +42,7 @@
   <ItemGroup>
     <Compile Include="CoolDI.cs" />
     <Compile Include="Entities\Exceptions\InvalidDelegateReturnTypeException.cs" />
+    <Compile Include="Entities\Binder.cs" />
     <Compile Include="Entities\KeysAndValues\Key.cs" />
     <Compile Include="Entities\KeysAndValues\KeyComparer.cs" />
     <Compile Include="Entities\Exceptions\LateBindingException.cs" />

@@ -48,6 +48,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CoolDITest.cs" />
     <Compile Include="SamopalDITest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

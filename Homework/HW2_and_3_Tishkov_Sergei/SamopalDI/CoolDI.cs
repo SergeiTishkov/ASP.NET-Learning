@@ -10,23 +10,33 @@ using System.Threading.Tasks;
 
 namespace SamopalIndustries
 {
-    class CoolDI
+
+    // Не до конца доделанный, но крутой (вроде) контейнер
+    // ДЗ сделал со старым, SamopalDI контейнером
+    // этот не успел  до конца дотестить, дописываю эти строчки
+    // в 4 утра пятницы 27.07.2018
+    // SamopalDI протестирован лучше
+    // XML документация на конструкторах висит из SamopalDI
+    // ещё в планах сделать возможным late binding из аргументов незабиндженых конструкторов, вызываемых через рефлексию
+    // (если будет поставлена соответствующее булевое свойство)
+    // и ещё одно свойство LateBindingOptions для рефлексивного создания незабиндженых классов
+    // сделать бы ещё попытку создать незабиндженый класс через все конструкторы, начная с условленного в LateBindingOptions,
+    // если другие конструкторы не преуспели, надо думать (рекурсию в catch блоке скорее всего попробую сделать)
+    public class CoolDI
     {
         private Dictionary<Key, Value_CoolDI> _dict;
 
-        private Key _lastBind;
-
         /// <summary>
-        /// Initializes a new instance of the SamopalDI class.
+        /// Initializes a new instance of the CoolDI class.
         /// </summary>
         public CoolDI() : this(LateBindingOptions.MaxCtor)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the SamopalDI class by using the specified LateBindingOptions object.
+        /// Initializes a new instance of the CoolDI class by using the specified LateBindingOptions object.
         /// </summary>
-        /// <param name="options">Choose the kind of constructor that will be used in late binding process.</param>
+        /// <param name="options">The kind of constructor that will be used in late binding process.</param>
         public CoolDI(LateBindingOptions options)
         {
             LateBindingOption = options;
@@ -35,41 +45,33 @@ namespace SamopalIndustries
 
         public LateBindingOptions LateBindingOption { get; set; }
 
-        public CoolDI BindDefault<TKey>()
+        public Binder<TKey> BindDefaultAsSingleton<TKey>()
         {
-            Key key = new Key(typeof(TKey), 0);
-
-            if (_dict.ContainsKey(key))
-            {
-                _dict[key] = null;
-            }
-            else
-            {
-                _dict.Add(key, null);
-            }
-
-            _lastBind = key;
-            return this;
+            return GetBinder<TKey>(0, true);
         }
 
-        public void ToSelf()
+        public Binder<TKey> BindDefault<TKey>()
         {
-            _dict[_lastBind] = new Value_CoolDI(_lastBind.KeyType, null);
+            return GetBinder<TKey>(0, false);
         }
 
-        public void To<TValue>()
+        public Binder<TKey> BindExample<TKey>(int example)
         {
-            _dict[_lastBind] = new Value_CoolDI(typeof(TValue), null);
+            return GetBinder<TKey>(example, false);
         }
 
-        public void ToDelegateWOArgs<TValue>(Func<TValue> creatorWOArgs)
+        private Binder<TKey> GetBinder<TKey>(int example, bool isSingleton)
         {
-            _dict[_lastBind] = new Value_CoolDI(null, creatorWOArgs);
+            Key key = new Key(typeof(TKey), example);
+
+            _dict[key] = null;
+
+            return new Binder<TKey>(key, this, isSingleton);
         }
 
-        public void ToDelegateWithArgs<TValue>(Func<object[], TValue> creatorWOArgs)
+        internal void BindByBinder(Key key, Type typeOfValue, Delegate creator, bool isSingleton)
         {
-            _dict[_lastBind] = new Value_CoolDI(null, creatorWOArgs);
+            _dict[key] = new Value_CoolDI(typeOfValue, creator, isSingleton);
         }
 
         public TKey GetDefault<TKey>()
@@ -94,10 +96,10 @@ namespace SamopalIndustries
 
         private TKey GetAndConvert<TKey>(int example, object[] args)
         {
-            return (TKey)Get(typeof(TKey), example, args);
+            return (TKey)GetObject(typeof(TKey), example, args);
         }
 
-        private object Get(Type keyType, int example, object[] args)
+        private object GetObject(Type keyType, int example, object[] args)
         {
             Key key = new Key(keyType, example);
             Value_CoolDI value;
@@ -113,15 +115,30 @@ namespace SamopalIndustries
                     throw new ArgumentException($"You didn't do the {example} specific example bind of {keyType.FullName}", e);
             }
 
-            if (value.Creator != null)
+            if (value.IsSingleton)
             {
-                if(args == null)
+                if (value.Singleton == null)
+                {
+                    value.Singleton = GetObject(value, args);
+                }
+                return value.Singleton;
+            }
+
+            return GetObject(value, args);
+        }
+
+        private object GetObject(Value_CoolDI value, object[] args)
+        {
+            if(value.Creator != null)
+            {
+                if (args == null)
                 {
                     return value.Creator.DynamicInvoke();
                 }
                 else
                 {
-                    return value.Creator.DynamicInvoke(args);
+                    object[] wrapper = new object[1] { args };
+                    return value.Creator.DynamicInvoke(wrapper);
                 }
             }
             else
@@ -140,7 +157,7 @@ namespace SamopalIndustries
             for (int i = 0; i < parameterInfos.Length; i++)
             {
                 Type typeOfParameter = parameterInfos[i].ParameterType;
-                parameters[i] = Get(typeOfParameter, 0, null);
+                parameters[i] = GetObject(typeOfParameter, 0, null);
             }
 
             return ctor.Invoke(parameters);

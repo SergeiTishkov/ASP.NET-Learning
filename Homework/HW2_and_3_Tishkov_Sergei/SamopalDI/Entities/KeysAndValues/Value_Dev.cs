@@ -12,10 +12,15 @@ namespace SamopalIndustries.Entities.KeysAndValues
 
         internal Delegate Creator { get; }
 
-        internal Value_CoolDI(Type type, Delegate creator)
+        internal bool IsSingleton { get; }
+
+        internal object Singleton { get; set; }
+
+        internal Value_CoolDI(Type type, Delegate creator, bool isSingleton)
         {
             Type = type;
             Creator = creator;
+            IsSingleton = isSingleton;
         }
     }
 }
