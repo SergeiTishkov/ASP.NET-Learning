@@ -14,7 +14,7 @@ namespace AutoMailSenderApp
     {
         private static void Main(string[] args)
         {
-            IFileHandler handler = InstantiateDefaultFileHandlerDI();
+            IFileHandler handler = InstantiateDefaultFileHandlerByCoolDI();
             handler.Enable();
 
             while (Console.ReadKey(true).Key != ConsoleKey.Escape)
@@ -22,7 +22,73 @@ namespace AutoMailSenderApp
             }
         }
 
-        private static IFileHandler InstantiateDefaultFileHandlerDI()
+        private static IFileHandler InstantiateDefaultFileHandlerByCoolDI()
+        {
+            var di = new CoolDI();
+
+            di.BindDefaultAsSingleton<AppSettingsReader>().ToSelf();
+
+            di.BindDefault<ISmtpHandler>().ToDelegateWOArgs(() =>
+            {
+                AppSettingsReader appSettingsReader = di.GetDefault<AppSettingsReader>();
+
+                string mail = (string)appSettingsReader.GetValue("OurMailAddress", typeof(string));
+                string host = (string)appSettingsReader.GetValue("Host", typeof(string));
+                int port = (int)appSettingsReader.GetValue("Port", typeof(int));
+                SmtpDeliveryMethod method = (SmtpDeliveryMethod)appSettingsReader.GetValue("SMTPDeliveryMethod", typeof(int));
+                string ourMailPassword = (string)appSettingsReader.GetValue("OurMailPassword", typeof(string));
+                bool enableSsl = (bool)appSettingsReader.GetValue("EnableSSL", typeof(bool));
+
+                return new SmtpHandler(host, port, method, new NetworkCredential(mail, ourMailPassword), enableSsl);
+            });
+
+            di.BindDefault<ISendingFileFactory>().To<SendingFileFactory>();
+
+            di.BindDefault<IFileSender>().ToDelegateWOArgs(() =>
+            {
+                AppSettingsReader appSettingsReader = di.GetDefault<AppSettingsReader>();
+
+                string ourMail = (string)appSettingsReader.GetValue("OurMailAddress", typeof(string));
+                string targetMail = (string)appSettingsReader.GetValue("TargetMailAddress", typeof(string));
+
+                return new FileSender(ourMail, targetMail, di.GetDefault<ISmtpHandler>(), di.GetDefault<ISendingFileFactory>());
+            });
+
+            di.BindDefault<IFileManipulator>().To<FileManipulator>();
+
+            di.BindDefault<IFileWatcher>().ToDelegateWOArgs(() =>
+            {
+                AppSettingsReader appSettingsReader = di.GetDefault<AppSettingsReader>();
+
+                string mailToSendFolderPath = (string)appSettingsReader.GetValue("MailToSendFP", typeof(string));
+                NotifyFilters notifyFilter = (NotifyFilters)appSettingsReader.GetValue("NotifyFilter", typeof(int));
+                string filter = (string)appSettingsReader.GetValue("Filter", typeof(string));
+
+                return new FileWatcher(mailToSendFolderPath, filter, notifyFilter, di.GetDefault<IFileManipulator>());
+            });
+
+            di.BindDefault<ILog>().ToDelegateWOArgs(() => LogManager.GetLogger(typeof(FileHandler)));
+
+            di.BindDefault<IFileHandler>().ToDelegateWOArgs(() =>
+            {
+                AppSettingsReader appSettingsReader = di.GetDefault<AppSettingsReader>();
+
+                string mailToSendFolderPath = (string)appSettingsReader.GetValue("MailToSendFP", typeof(string));
+                string invalidMailFolderPath = (string)appSettingsReader.GetValue("InvalidMailFP", typeof(string));
+
+                return new FileHandler(
+                    mailToSendFolderPath,
+                    invalidMailFolderPath,
+                    di.GetDefault<IFileWatcher>(),
+                    di.GetDefault<IFileManipulator>(),
+                    di.GetDefault<IFileSender>(),
+                    di.GetDefault<ILog>());
+            });
+
+            return di.GetDefault<IFileHandler>();
+        }
+
+        private static IFileHandler InstantiateDefaultFileHandlerBySamopalDI()
         {
             var di = new SamopalDI();
 
