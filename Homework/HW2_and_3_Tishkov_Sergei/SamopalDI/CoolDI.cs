@@ -63,9 +63,6 @@ namespace SamopalIndustries
         private Binder<TKey> GetBinder<TKey>(int example, bool isSingleton)
         {
             Key key = new Key(typeof(TKey), example);
-
-            _dict[key] = null;
-
             return new Binder<TKey>(key, this, isSingleton);
         }
 
@@ -133,7 +130,7 @@ namespace SamopalIndustries
             {
                 var getterType = typeof(ReflectionGetter<>).MakeGenericType(value.Type);
                 dynamic getter = getterType.GetConstructors()[0].Invoke(new object[] { this });
-                return getter.GetByReflection();
+                return getter.GetObject();
             }
         }
 
@@ -189,7 +186,7 @@ namespace SamopalIndustries
                 _di = di;
             }
 
-            internal object GetByReflection()
+            internal object GetObject()
             {
                 ConstructorInfo ctor = GetConstructor(typeof(T));
                 ParameterInfo[] parameterInfos = ctor.GetParameters();
