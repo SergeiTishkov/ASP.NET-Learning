@@ -125,13 +125,15 @@ namespace SamopalIndustries
 
         private object GetObject(Key key, Value_CoolDI value, object[] args)
         {
-            if(value.Creator != null)
+            if (value.Creator != null)
             {
                 return GetByDelegate(key, value, args);
             }
             else
             {
-                return GetByReflection(value.Type);
+                var getterType = typeof(ReflectionGetter<>).MakeGenericType(value.Type);
+                dynamic getter = getterType.GetConstructors()[0].Invoke(new object[] { this });
+                return getter.GetByReflection();
             }
         }
 
@@ -155,68 +157,6 @@ namespace SamopalIndustries
             }
         }
 
-        private object GetByReflection(Type type)
-        {
-            ConstructorInfo ctor = GetConstructor(type);
-            ParameterInfo[] parameterInfos = ctor.GetParameters();
-
-            object[] parameters = new object[parameterInfos.Length];
-
-            for (int i = 0; i < parameterInfos.Length; i++)
-            {
-                Type typeOfParameter = parameterInfos[i].ParameterType;
-                parameters[i] = GetObject(typeOfParameter, 0, null);
-            }
-
-            return ctor.Invoke(parameters);
-        }
-
-        private ConstructorInfo GetConstructor(Type type)
-        {
-            List<ConstructorInfo> ctors = type.GetConstructors().Where(info => info.IsPublic).ToList();
-            ctors.Sort(CompareCtorInfo);
-            ConstructorInfo result = null;
-
-            switch (LateBindingOption)
-            {
-                case LateBindingOptions.DefaultCtor:
-                    result = ctors[0];
-                    if (result.GetParameters().Length > 0)
-                        throw new LateBindingException
-                            ($"There isn't default constructor of {type.FullName}.\nIf you don't want to get this type of exception again, just change the value of the LateBindingOption property.");
-                    break;
-                case LateBindingOptions.DefaultOrMinCtor:
-                    result = ctors.First();
-                    break;
-                case LateBindingOptions.DefaultOrMaxCtor:
-                    if (ctors[0].GetParameters().Length == 0)
-                    {
-                        result = ctors.First();
-                    }
-                    else
-                    {
-                        result = ctors.Last();
-                    }
-                    break;
-                case LateBindingOptions.MaxCtor:
-                    result = ctors.Last();
-                    break;
-            }
-            return result;
-        }
-
-        private int CompareCtorInfo(ConstructorInfo c1, ConstructorInfo c2)
-        {
-            var args1 = c1.GetParameters();
-            var args2 = c2.GetParameters();
-
-            if (args1.Length > args2.Count())
-                return 1;
-            else if (args1.Length < args2.Count())
-                return -1;
-            else return 0;
-        }
-
         private WrongParametersException CreateWrongParametersException(Key key, Value_CoolDI value, object[] args, Exception innerExc)
         {
             StringBuilder message = new StringBuilder("Fault to invoke ");
@@ -238,6 +178,78 @@ namespace SamopalIndustries
             }
 
             throw new WrongParametersException(message.ToString(), innerExc);
+        }
+
+        private struct ReflectionGetter<T>
+        {
+            private readonly CoolDI _di;
+
+            public ReflectionGetter(CoolDI di)
+            {
+                _di = di;
+            }
+
+            internal object GetByReflection()
+            {
+                ConstructorInfo ctor = GetConstructor(typeof(T));
+                ParameterInfo[] parameterInfos = ctor.GetParameters();
+
+                object[] parameters = new object[parameterInfos.Length];
+
+                for (int i = 0; i < parameterInfos.Length; i++)
+                {
+                    Type typeOfParameter = parameterInfos[i].ParameterType;
+                    parameters[i] = _di.GetObject(typeOfParameter, 0, null);
+                }
+
+                return ctor.Invoke(parameters);
+            }
+
+            private ConstructorInfo GetConstructor(Type type)
+            {
+                List<ConstructorInfo> ctors = type.GetConstructors().Where(info => info.IsPublic).ToList();
+                ctors.Sort(CompareCtorInfo);
+                ConstructorInfo result = null;
+
+                switch (_di.LateBindingOption)
+                {
+                    case LateBindingOptions.DefaultCtor:
+                        result = ctors[0];
+                        if (result.GetParameters().Length > 0)
+                            throw new LateBindingException
+                                ($"There isn't default constructor of {type.FullName}.\nIf you don't want to get this type of exception again, just change the value of the LateBindingOption property.");
+                        break;
+                    case LateBindingOptions.DefaultOrMinCtor:
+                        result = ctors.First();
+                        break;
+                    case LateBindingOptions.DefaultOrMaxCtor:
+                        if (ctors[0].GetParameters().Length == 0)
+                        {
+                            result = ctors.First();
+                        }
+                        else
+                        {
+                            result = ctors.Last();
+                        }
+                        break;
+                    case LateBindingOptions.MaxCtor:
+                        result = ctors.Last();
+                        break;
+                }
+                return result;
+            }
+
+            private int CompareCtorInfo(ConstructorInfo c1, ConstructorInfo c2)
+            {
+                var args1 = c1.GetParameters();
+                var args2 = c2.GetParameters();
+
+                if (args1.Length > args2.Count())
+                    return 1;
+                else if (args1.Length < args2.Count())
+                    return -1;
+                else return 0;
+            }
         }
     }
 }
