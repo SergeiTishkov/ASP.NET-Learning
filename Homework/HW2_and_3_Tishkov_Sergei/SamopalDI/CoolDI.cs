@@ -1,4 +1,5 @@
 ﻿using SamopalIndustries.Entities;
+using SamopalIndustries.Entities.Enums;
 using SamopalIndustries.Entities.Exceptions;
 using SamopalIndustries.Entities.KeysAndValues;
 using System;
