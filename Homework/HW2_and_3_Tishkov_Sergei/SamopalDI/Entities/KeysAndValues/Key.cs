@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace SamopalIndustries.Entities.KeysAndValues
 {
-    internal struct Key
+    internal class Key
     {
         internal Key(Type keyType, int example)
         {

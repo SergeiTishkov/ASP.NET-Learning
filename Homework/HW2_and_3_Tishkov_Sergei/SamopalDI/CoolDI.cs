@@ -48,30 +48,33 @@ namespace SamopalIndustries
 
         public Binder<TKey> BindDefaultAsSingleton<TKey>()
         {
-            return GetBinder<TKey>(0, true);
+            return GetBinder<TKey>(0, false, true);
         }
 
         public Binder<TKey> BindDefault<TKey>()
         {
-            return GetBinder<TKey>(0, false);
+            return GetBinder<TKey>(0, false, false);
         }
 
         public Binder<TKey> BindExample<TKey>(int example)
         {
-            return GetBinder<TKey>(example, false);
+            return GetBinder<TKey>(example, true, false);
         }
 
-        private Binder<TKey> GetBinder<TKey>(int example, bool isSingleton)
+        private Binder<TKey> GetBinder<TKey>(int example, bool isExampleBind, bool isSingleton)
         {
             Key key = new Key(typeof(TKey), example);
 
-            _dict[key] = null;
-
-            return new Binder<TKey>(key, this, isSingleton);
+            return new Binder<TKey>(key, this, isExampleBind, isSingleton);
         }
 
-        internal void BindByBinder(Key key, Type typeOfValue, Delegate creator, bool isSingleton)
+        internal void BindByBinder(Key key, Type typeOfValue, Delegate creator, bool isExampleBind, bool isSingleton)
         {
+            if (isExampleBind && key.Example == 0)
+            {
+                throw new ArgumentException("Zero example is reserved for default bind and not available for binding new examples manually.");
+            }
+
             _dict[key] = new Value_CoolDI(typeOfValue, creator, isSingleton);
         }
 
