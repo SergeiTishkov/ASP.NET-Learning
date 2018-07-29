@@ -47,7 +47,7 @@
     <Compile Include="Entities\KeysAndValues\Key.cs" />
     <Compile Include="Entities\KeysAndValues\KeyComparer.cs" />
     <Compile Include="Entities\Exceptions\LateBindingException.cs" />
-    <Compile Include="Entities\KeysAndValues\Value_Dev.cs" />
+    <Compile Include="Entities\KeysAndValues\Value_CoolDI.cs" />
     <Compile Include="Entities\LateBindingOptions.cs" />
     <Compile Include="Entities\KeysAndValues\Value.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
