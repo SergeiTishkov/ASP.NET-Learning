@@ -70,5 +70,23 @@ namespace SamopalDITest
             Assert.IsTrue(var1 is Class5 && var2 is Class5 && var3 is Class5 &&
                 Equals(var1, var2) && Equals(var2, var3));
         }
+
+        // Testing of default invocation
+        // All three variables should NOT be the same object
+        // This test will check that default is NOT singleton
+        [TestMethod]
+        public void CoolDISeeCommentsIntTest05()
+        {
+            CoolDI di = new CoolDI();
+
+            di.BindDefault<IClass5>().ToDelegateWithArgs((args) => new Class5((string)args[0]));
+            object[] array = new object[1] { "Hey!" };
+            var var1 = di.GetDefault<IClass5>(array);
+            var var2 = di.GetDefault<IClass5>(array);
+            var var3 = di.GetDefault<IClass5>(array);
+
+            Assert.IsTrue(var1 is Class5 && var2 is Class5 && var3 is Class5);
+            Assert.IsFalse(Equals(var1, var2) || Equals(var2, var3));
+        }
     }
 }

@@ -114,7 +114,7 @@ namespace SamopalDITest
 
             Assert.AreEqual(expected, actual);
             Assert.AreEqual("Hello, Test!", variable.Class4.Class5.SomeString);
-            Assert.AreNotEqual(null, variable.Class2.Class3);
+            Assert.IsNotNull(variable.Class2.Class3);
         }
 
         // Should work correctly because args in creator delegate wasn't null 
@@ -150,7 +150,7 @@ namespace SamopalDITest
 
             Assert.AreEqual(expected, actual);
             Assert.AreEqual("Hello, Test!", variable.Class4.Class5.SomeString);
-            Assert.AreNotEqual(null, variable.Class2.Class3);
+            Assert.IsNotNull(variable.Class2.Class3);
         }
 
         // Should throw an ArgumentException because example = 0 isn't available
@@ -241,7 +241,7 @@ namespace SamopalDITest
 
             Assert.AreEqual(expected, actual);
             Assert.AreEqual("Hello, Test!", variable.Class4.Class5.SomeString);
-            Assert.AreNotEqual(null, variable.Class2.Class3);
+            Assert.IsNotNull(variable.Class2.Class3);
         }
 
         // Should throw custom LateBindingException because we will try to invoke
@@ -270,7 +270,7 @@ namespace SamopalDITest
 
             var class1 = di.GetDefault<IClass1>();
 
-            Assert.AreEqual(null, class1.Class4);
+            Assert.IsNull(class1.Class4);
         }
 
         // Test of LateBindingOptions.DefaultOrMax
@@ -289,7 +289,7 @@ namespace SamopalDITest
 
             var class1 = di.GetDefault<IClass1>();
 
-            Assert.AreNotEqual(null, class1.Class4);
+            Assert.IsNotNull(class1.Class4);
         }
 
         // Should throw InvalidDelegateReturnTypeException <- name of exception can speak for itself
