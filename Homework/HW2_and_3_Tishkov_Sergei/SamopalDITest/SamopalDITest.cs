@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SamopalIndustries;
 using SamopalIndustries.Entities;
+using SamopalIndustries.Entities.Enums;
 using SamopalIndustries.Entities.Exceptions;
 
 namespace SamopalDITest
@@ -11,7 +12,7 @@ namespace SamopalDITest
     {
         // Integrational tests
 
-        // Should throw ArguementException because class was not binded
+        // Must throw ArguementException because class was not binded
         [TestMethod]
         public void SamopalDISeeCommentsIntTest01()
         {
@@ -24,7 +25,7 @@ namespace SamopalDITest
             Assert.ThrowsException<ArgumentException>(() => di.GetExample<IClass1>(1));
         }
 
-        // Should not throw any kind of exception if default bind or example bind is changed
+        // Must not throw any kind of exception if default bind or example bind is changed
         [TestMethod]
         public void SamopalDISeeCommentsIntTest02()
         {
@@ -41,8 +42,8 @@ namespace SamopalDITest
             IClass2 class2WithAnotherClass3 = di.GetExample<IClass2>(1, null);
         }
 
-        // Should work good because class was binded correctly
-        // Also should automatically get default binded arguments for late binding constructors
+        // Must work good because class was binded correctly
+        // Also must automatically get default binded arguments for late binding constructors
         [TestMethod]
         public void SamopalDISeeCommentsIntTest03()
         {
@@ -64,7 +65,7 @@ namespace SamopalDITest
             Assert.AreEqual("Hello, Test!", variable.Class4.Class5.SomeString);
         }
 
-        // Should throw NullReferenseException because args in creator delegate of IClass5 default bind is null
+        // Must throw NullReferenseException because args in creator delegate of IClass5 default bind is null
         [TestMethod]
         public void SamopalDISeeCommentsIntTest04()
         {
@@ -81,7 +82,7 @@ namespace SamopalDITest
             Assert.ThrowsException<NullReferenceException>(() => di.GetDefault<IClass1>());
         }
 
-        // Should work correctly because args in creator delegate wasn't null 
+        // Must work correctly because args in creator delegate wasn't null 
         // Testing of binding types to Func<object[], object>, i.e. with incoming args
         [TestMethod]
         public void SamopalDISeeCommentsIntTest05()
@@ -117,7 +118,7 @@ namespace SamopalDITest
             Assert.IsNotNull(variable.Class2.Class3);
         }
 
-        // Should work correctly because args in creator delegate wasn't null 
+        // Must work correctly because args in creator delegate wasn't null 
         // Testing of binding types to Func<object>, i.e. without incoming args
         [TestMethod]
         public void SamopalDISeeCommentsIntTest06()
@@ -153,7 +154,7 @@ namespace SamopalDITest
             Assert.IsNotNull(variable.Class2.Class3);
         }
 
-        // Should throw an ArgumentException because example = 0 isn't available
+        // Must throw an ArgumentException because example = 0 isn't available
         [TestMethod]
         public void SamopalDISeeCommentsIntTest07()
         {
@@ -166,7 +167,7 @@ namespace SamopalDITest
             });
         }
 
-        // Test of example binding, should throw any Exceptiom because 
+        // Test of example binding, must throw any Exceptiom because 
         // all bindings will be correct, except this fact what
         // Class3's property Class4 is late binded by reflection
         // and auto binding by reflection occurs only by Defauld binding GetDefault()
@@ -202,8 +203,8 @@ namespace SamopalDITest
         }
 
         // Test of example binding, very similar with 5 test,
-        // should not throw any Exceptiom because 
-        // all bindings will be correct
+        // Must not throw any Exceptiom because 
+        // All bindings will be correct
         [TestMethod]
         public void SamopalDISeeCommentsIntTest09()
         {
@@ -244,7 +245,7 @@ namespace SamopalDITest
             Assert.IsNotNull(variable.Class2.Class3);
         }
 
-        // Should throw custom LateBindingException because we will try to invoke
+        // Must throw custom LateBindingException because we will try to invoke
         // Class 1 where isn't default ctor with LateBindingOptions.DefaultCtor.
         [TestMethod]
         public void SamopalDISeeCommentsIntTest10()
@@ -256,7 +257,7 @@ namespace SamopalDITest
             Assert.ThrowsException<LateBindingException>(() => di.GetDefault<IClass1>());
         }
 
-        // Should not throw custom LateBindingException because
+        // Must not throw custom LateBindingException because
         // we will set LateBindingOptions to LateBindingOptions.DefaultOrMinCtor.
         // Also we will look if Class1 instance was created by minimal ctor
         // because it doesn't have default ctor
@@ -292,7 +293,7 @@ namespace SamopalDITest
             Assert.IsNotNull(class1.Class4);
         }
 
-        // Should throw InvalidDelegateReturnTypeException <- name of exception can speak for itself
+        // Must throw InvalidDelegateReturnTypeException <- name of exception can speak for itself
         [TestMethod]
         public void SamopalDISeeCommentsIntTest13()
         {
@@ -303,7 +304,7 @@ namespace SamopalDITest
             Assert.ThrowsException<InvalidDelegateReturnTypeException>(() => di.GetDefault<IClass1>());
         }
 
-        // Should throw NullReferenceException because class was binded to arguement delegate,
+        // Must throw NullReferenceException because class was binded to arguement delegate,
         // but was invoked without arguements
         [TestMethod]
         public void SamopalDISeeCommentsIntTest14()

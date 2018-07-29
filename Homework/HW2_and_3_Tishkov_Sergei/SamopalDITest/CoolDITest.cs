@@ -10,7 +10,7 @@ namespace SamopalDITest
     public class CoolDITest
     {
         // Testing of simple invocation
-        // Should return new Class3 variable, simple test
+        // Must return new Class3 variable, simple test
         [TestMethod]
         public void CoolDISeeCommentsIntTest01()
         {
@@ -23,7 +23,7 @@ namespace SamopalDITest
         }
 
         // Testing of recursive invocation and invocation with delegate without args
-        // Should return new Class1 variable, slightly more complex test
+        // Must return new Class1 variable, slightly more complex test
         [TestMethod]
         public void CoolDISeeCommentsIntTest02()
         {
@@ -40,7 +40,7 @@ namespace SamopalDITest
         }
 
         // Testing of throwing exception
-        // Should throw WrongParametersException because
+        // Must throw WrongParametersException because
         // args wasn't used in invocation of di.GetDefault<IClass1>()
         [TestMethod]
         public void CoolDISeeCommentsIntTest03()
@@ -57,7 +57,7 @@ namespace SamopalDITest
         }
 
         // Testing of recursive invocation and invocation with delegate with args
-        // Should return new Class4 variable
+        // Must return new Class4 variable
         [TestMethod]
         public void CoolDISeeCommentsIntTest04()
         {
@@ -72,7 +72,7 @@ namespace SamopalDITest
         }
 
         // Testing of singleton invocation
-        // All three variables should be the same object
+        // All three variables must be the same object
         [TestMethod]
         public void CoolDISeeCommentsIntTest05()
         {
@@ -89,10 +89,27 @@ namespace SamopalDITest
         }
 
         // Testing of default invocation
-        // All three variables should NOT be the same object
+        // All three variables must NOT be the same object
         // This test will check that default is NOT singleton
         [TestMethod]
         public void CoolDISeeCommentsIntTest06()
+        {
+            CoolDI di = new CoolDI();
+
+            di.BindDefault<IClass5>().ToDelegateWithArgs((args) => new Class5((string)args[0]));
+            object[] array = new object[1] { "Hey!" };
+            var var1 = di.GetDefault<IClass5>(array);
+            var var2 = di.GetDefault<IClass5>(array);
+            var var3 = di.GetDefault<IClass5>(array);
+
+            Assert.IsTrue(var1 is Class5 && var2 is Class5 && var3 is Class5);
+            Assert.IsFalse(Equals(var1, var2) || Equals(var2, var3));
+        }
+
+        // Testing of throwing ArgumentException
+        // Must throw this exception because 0 must 
+        [TestMethod]
+        public void CoolDISeeCommentsIntTest07()
         {
             CoolDI di = new CoolDI();
 
