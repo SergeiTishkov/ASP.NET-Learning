@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SamopalIndustries;
 using SamopalIndustries.Entities;
+using SamopalIndustries.Entities.Enums;
 using SamopalIndustries.Entities.Exceptions;
 
 namespace SamopalDITest
@@ -117,13 +118,35 @@ namespace SamopalDITest
         }
 
         // Testing of throwing ArgumentException
-        // Must throw this exception because there wasn't binding of IClass3
+        // Must throw this exception because there wasn't default binding of IClass3
         [TestMethod]
         public void CoolDISeeCommentsIntTest08()
         {
             CoolDI di = new CoolDI();
 
-            Assert.ThrowsException<ArgumentException>(() => di.GetDefault<Class3>());
+            Assert.ThrowsException<UnbindedTypeException>(() => di.GetDefault<Class3>());
+        }
+
+        // Testing of throwing ArgumentException
+        // Must throw this exception because there wasn't example 1 binding of IClass3
+        [TestMethod]
+        public void CoolDISeeCommentsIntTest09()
+        {
+            CoolDI di = new CoolDI();
+
+            Assert.ThrowsException<UnbindedTypeException>(() => di.GetExample<Class3>(1));
+        }
+
+        // Testing late binding of unbinded types and recursive invocation of unbinded types
+        [TestMethod]
+        public void CoolDISeeCommentsIntTest10()
+        {
+            CoolDI di = new CoolDI(LateBindingOptions.MaxCtor, true);
+
+            di.BindDefault<Class10>().ToDelegateWOArgs(() => new Class10("Hey!"));
+            var class6 = di.GetDefault<Class6>();
+
+            Assert.IsTrue(class6 is Class6 && class6.Class9.Class10.SomeString == "Hey!" && class6.Class7.Class8 != null);
         }
     }
 }

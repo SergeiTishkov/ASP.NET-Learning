@@ -46,7 +46,7 @@ namespace SamopalIndustries
         /// Initializes a new instance of the CoolDI class by using the specified LateBindingOptions object.
         /// </summary>
         /// <param name="options">The kind of constructor that will be used in late binding process.</param>
-        /// <param name="invokeUnbindedTypes">Set "true" to get unbinded arguments of binded types constructors by reflection.</param>
+        /// <param name="invokeUnbindedTypes">Set "true" to get unbinded types by reflection.</param>
         public CoolDI(LateBindingOptions options, bool invokeUnbindedTypes)
         {
             LateBindingOption = options;
@@ -113,18 +113,17 @@ namespace SamopalIndustries
         private object GetObject(Type keyType, int example, object[] args)
         {
             Key key = new Key(keyType, example);
-            Value_CoolDI value;
-            try
+
+            if (!_dict.TryGetValue(key, out Value_CoolDI value))
             {
-                value = _dict[key];
-            }
-            catch (KeyNotFoundException keyNotFoundExc)
-            {
-                if (example == 0)
-                    throw new ArgumentException($"You didn't do the default bind of {keyType.FullName}", keyNotFoundExc);
+                if (InvokeUnbindedTypes)
+                {
+                    return GetByReflection(keyType);
+                }
                 else
-                    throw new ArgumentException
-                        ($"You didn't do the {example} specific example bind of {keyType.FullName}", keyNotFoundExc);
+                {
+                    throw new UnbindedTypeException($"You didn't do the {(example == 0 ? "default" : $"{example} specific example")} bind of {keyType.FullName}.");
+                }
             }
 
             if (value.IsSingleton)
@@ -173,6 +172,19 @@ namespace SamopalIndustries
 
         private object GetByReflection(Type type)
         {
+            if (type.IsAbstract)
+            {
+                throw new LateBindingException($"{type.FullName} is abstract and can't be late binded.");
+            }
+            if (type.IsInterface)
+            {
+                throw new LateBindingException($"{type.FullName} is abstract and can't be late binded.");
+            }
+            if (type.IsEnum)
+            {
+                return type.GetEnumValues().GetValue(0);
+            }
+            
             ConstructorInfo ctor = GetConstructor(type);
             ParameterInfo[] parameterInfos = ctor.GetParameters();
 
@@ -199,7 +211,7 @@ namespace SamopalIndustries
                     result = ctors[0];
                     if (result.GetParameters().Length > 0)
                         throw new LateBindingException
-                            ($"There isn't default constructor of {type.FullName}.\nIf you don't want to get this type of exception again, just change the value of the LateBindingOption property.");
+                            ($"The LateBindingOption property is set to DefaultCtor, but there isn't default constructor of {type.FullName}.");
                     break;
                 case LateBindingOptions.DefaultOrMinCtor:
                     result = ctors.First();

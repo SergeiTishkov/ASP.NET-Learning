@@ -51,6 +51,7 @@
     <Compile Include="CoolDITest.cs" />
     <Compile Include="SamopalDITest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TestClassesAndInterfaces.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

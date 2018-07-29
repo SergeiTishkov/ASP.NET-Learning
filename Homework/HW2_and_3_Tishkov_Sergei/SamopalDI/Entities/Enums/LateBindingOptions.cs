@@ -25,7 +25,7 @@
 
         /// <summary>
         /// Constructor with maximal number of arguments will be used for late binding.
-        /// This option is default for SamopalDI.
+        /// This option is default for SamopalDI and CoolDI.
         /// </summary>
         MaxCtor
     }

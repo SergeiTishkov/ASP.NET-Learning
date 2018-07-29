@@ -43,6 +43,7 @@
     <Compile Include="CoolDI.cs" />
     <Compile Include="Entities\Exceptions\InvalidDelegateReturnTypeException.cs" />
     <Compile Include="Entities\Binder.cs" />
+    <Compile Include="Entities\Exceptions\UnbindedTypeException.cs" />
     <Compile Include="Entities\Exceptions\WrongParametersException.cs" />
     <Compile Include="Entities\KeysAndValues\Key.cs" />
     <Compile Include="Entities\KeysAndValues\KeyComparer.cs" />
