@@ -76,25 +76,20 @@ namespace SamopalIndustries
 
         public TKey GetDefault<TKey>()
         {
-            return GetAndConvert<TKey>(0, null);
+            return (TKey)GetObject(typeof(TKey), 0, null);
         }
 
         public TKey GetDefault<TKey>(params object[] args)
         {
-            return GetAndConvert<TKey>(0, args);
+            return (TKey)GetObject(typeof(TKey), 0, args);
         }
 
         public TKey GetExample<TKey>(int example)
         {
-            return GetAndConvert<TKey>(example, null);
+            return (TKey)GetObject(typeof(TKey), example, null);
         }
 
         public TKey GetExample<TKey>(int example, params object[] args)
-        {
-            return GetAndConvert<TKey>(example, args);
-        }
-
-        private TKey GetAndConvert<TKey>(int example, object[] args)
         {
             return (TKey)GetObject(typeof(TKey), example, args);
         }
@@ -107,29 +102,42 @@ namespace SamopalIndustries
             {
                 value = _dict[key];
             }
-            catch (KeyNotFoundException e)
+            catch (KeyNotFoundException keyNotFoundExc)
             {
                 if (example == 0)
-                    throw new ArgumentException($"You didn't do the default bind of {keyType.FullName}", e);
+                    throw new ArgumentException($"You didn't do the default bind of {keyType.FullName}", keyNotFoundExc);
                 else
-                    throw new ArgumentException($"You didn't do the {example} specific example bind of {keyType.FullName}", e);
+                    throw new ArgumentException
+                        ($"You didn't do the {example} specific example bind of {keyType.FullName}", keyNotFoundExc);
             }
 
             if (value.IsSingleton)
             {
                 if (value.Singleton == null)
                 {
-                    value.Singleton = GetObject(value, args);
+                    value.Singleton = GetObject(key, value, args);
                 }
                 return value.Singleton;
             }
 
-            return GetObject(value, args);
+            return GetObject(key, value, args);
         }
 
-        private object GetObject(Value_CoolDI value, object[] args)
+        private object GetObject(Key key, Value_CoolDI value, object[] args)
         {
             if(value.Creator != null)
+            {
+                return GetByDelegate(key, value, args);
+            }
+            else
+            {
+                return GetByReflection(value.Type);
+            }
+        }
+
+        private object GetByDelegate(Key key, Value_CoolDI value, object[] args)
+        {
+            try
             {
                 if (args == null)
                 {
@@ -141,9 +149,9 @@ namespace SamopalIndustries
                     return value.Creator.DynamicInvoke(wrapper);
                 }
             }
-            else
+            catch (TargetParameterCountException innerExc)
             {
-                return GetByReflection(value.Type);
+                throw CreateWrongParametersException(key, value, args, innerExc);
             }
         }
 
@@ -207,6 +215,29 @@ namespace SamopalIndustries
             else if (args1.Length < args2.Count())
                 return -1;
             else return 0;
+        }
+
+        private WrongParametersException CreateWrongParametersException(Key key, Value_CoolDI value, object[] args, Exception innerExc)
+        {
+            StringBuilder message = new StringBuilder("Fault to invoke ");
+            message.Append(key.Example == 0 ? "default " : $"{key.Example} specific example ");
+            message.Append($"delegate binded to {key.KeyType.FullName} due to wrong arguments: there was {(args == null ? 0 : args.Length)} arguments:\n");
+            if (args != null && args.Length > 0)
+            {
+                foreach (var arg in args ?? new object[0])
+                {
+                    message.Append(arg.GetType().FullName);
+                    message.Append(Environment.NewLine);
+                }
+            }
+            message.Append("but binded delegate has next arguments:\n");
+            foreach (var arg in value.Creator.GetMethodInfo().GetParameters())
+            {
+                message.Append(arg.ParameterType.FullName);
+                message.Append(Environment.NewLine);
+            }
+
+            throw new WrongParametersException(message.ToString(), innerExc);
         }
     }
 }

@@ -39,10 +39,27 @@ namespace SamopalDITest
             Assert.IsTrue(class1 is Class1 && class1.Class4.Class5.SomeString == "Hey!" && class1.Class2.Class3 != null);
         }
 
+        // Testing of throwing exception
+        // Should throw WrongParametersException because
+        // args wasn't used in invocation of di.GetDefault<IClass1>()
+        [TestMethod]
+        public void CoolDISeeCommentsIntTest03()
+        {
+            CoolDI di = new CoolDI();
+
+            di.BindDefault<IClass1>().To<Class1>();
+            di.BindDefault<IClass2>().To<Class2>();
+            di.BindDefault<IClass3>().To<Class3>();
+            di.BindDefault<IClass4>().To<Class4>();
+            di.BindDefault<IClass5>().ToDelegateWithArgs((args) => new Class5((string)args[0]));
+
+            Assert.ThrowsException<WrongParametersException>(() => di.GetDefault<IClass1>());
+        }
+
         // Testing of recursive invocation and invocation with delegate with args
         // Should return new Class4 variable
         [TestMethod]
-        public void CoolDISeeCommentsIntTest03()
+        public void CoolDISeeCommentsIntTest04()
         {
             CoolDI di = new CoolDI();
 
@@ -57,7 +74,7 @@ namespace SamopalDITest
         // Testing of singleton invocation
         // All three variables should be the same object
         [TestMethod]
-        public void CoolDISeeCommentsIntTest04()
+        public void CoolDISeeCommentsIntTest05()
         {
             CoolDI di = new CoolDI();
 
@@ -75,7 +92,7 @@ namespace SamopalDITest
         // All three variables should NOT be the same object
         // This test will check that default is NOT singleton
         [TestMethod]
-        public void CoolDISeeCommentsIntTest05()
+        public void CoolDISeeCommentsIntTest06()
         {
             CoolDI di = new CoolDI();
 
