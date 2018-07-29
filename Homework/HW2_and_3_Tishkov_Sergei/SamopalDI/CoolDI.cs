@@ -45,39 +45,102 @@ namespace SamopalIndustries
         /// <summary>
         /// Initializes a new instance of the CoolDI class by using the specified LateBindingOptions object.
         /// </summary>
-        /// <param name="options">The kind of constructor that will be used in late binding process.</param>
+        /// <param name="bindedLateBindingOptions">The kind of constructor that will be using in creating binded types by reflection.</param>
         /// <param name="invokeUnbindedTypes">Set "true" to get unbinded types by reflection.</param>
-        public CoolDI(LateBindingOptions options, bool invokeUnbindedTypes)
+        public CoolDI(LateBindingOptions bindedLateBindingOptions, bool invokeUnbindedTypes)
         {
-            LateBindingOption = options;
+            BindedLateBindingOption = bindedLateBindingOptions;
             InvokeUnbindedTypes = invokeUnbindedTypes;
             _dict = new Dictionary<Key, Value_CoolDI>(new KeyComparer());
         }
 
-        public LateBindingOptions LateBindingOption { get; set; }
+        /// <summary>
+        /// Gets or sets options of late binding for this CoolDI instance.
+        /// </summary>
+        public LateBindingOptions BindedLateBindingOption { get; set; }
 
+        /// <summary>
+        /// Gets or sets whether you'd like to invoke unbinded types by LateBindingOption rule (set "true") or get UnbindedTypeException (set "false").
+        /// </summary>
         public bool InvokeUnbindedTypes { get; set; }
 
+        /// <summary>
+        /// Returns special Binder object designed to bind TKey default example as singleton to some of optional variants of binding.
+        /// </summary>
+        /// <typeparam name="TKey">Binding type.</typeparam>
+        /// <returns>Special Binder type designed to bind TKey default example as singleton to some of optional variants of binding.</returns>
         public Binder<TKey> BindDefaultAsSingleton<TKey>()
         {
             return GetBinder<TKey>(0, false, true);
         }
 
+        /// <summary>
+        /// Returns special Binder object designed to bind TKey default example to some of optional variants of binding.
+        /// </summary>
+        /// <typeparam name="TKey">Binding type.</typeparam>
+        /// <returns>Special Binder object designed to bind TKey default example to some of optional variants of binding.</returns>
         public Binder<TKey> BindDefault<TKey>()
         {
             return GetBinder<TKey>(0, false, false);
         }
 
+        /// <summary>
+        /// Returns special Binder object designed to bind TKey specific example to some of optional variants of binding.
+        /// </summary>
+        /// <typeparam name="TKey">Binding type.</typeparam>
+        /// <param name="example">Specific example of getting the TKey type instance.</param>
+        /// <returns>Special Binder object designed to bind TKey specific example to some of optional variants of binding.</returns>
         public Binder<TKey> BindExample<TKey>(int example)
         {
             return GetBinder<TKey>(example, true, false);
         }
 
-        private Binder<TKey> GetBinder<TKey>(int example, bool isExampleBind, bool isSingleton)
+        /// <summary>
+        /// Returns TKey instance getting by default example getting variant.
+        /// Make sure you didn't bind TKey by DelegateWithArgs method before using this method.
+        /// </summary>
+        /// <typeparam name="TKey">Getting type.</typeparam>
+        /// <returns>TKey instance getting by default example getting variant.</returns>
+        public TKey GetDefault<TKey>()
         {
-            Key key = new Key(typeof(TKey), example);
+            return (TKey)GetObject(typeof(TKey), 0, null);
+        }
 
-            return new Binder<TKey>(key, this, isExampleBind, isSingleton);
+        /// <summary>
+        /// Returns TKey instance getting by default example getting variant, binded by DelegateWithArgs method.
+        /// Make sure you binded TKey by DelegateWithArgs method before using this method.
+        /// </summary>
+        /// <typeparam name="TKey">Getting type.</typeparam>
+        /// <param name="args">Arguments needed for delegate creating TKey instance.</param>
+        /// <returns>TKey instance getting by default example getting variant.</returns>
+        public TKey GetDefault<TKey>(params object[] args)
+        {
+            return (TKey)GetObject(typeof(TKey), 0, args);
+        }
+
+        /// <summary>
+        /// Returns TKey instance getting by specific example getting variant.
+        /// Make sure you didn't bind TKey by DelegateWithArgs method before using this method.
+        /// </summary>
+        /// <typeparam name="TKey">Getting type.</typeparam>
+        /// <param name="example">Specific example of getting the instance of TKey.</param>
+        /// <returns>TKey instance getting by specific example getting variant.</returns>
+        public TKey GetExample<TKey>(int example)
+        {
+            return (TKey)GetObject(typeof(TKey), example, null);
+        }
+
+        /// <summary>
+        /// Returns TKey instance getting by specific example getting variant.
+        /// Make sure you binded TKey by DelegateWithArgs method before using this method.
+        /// </summary>
+        /// <typeparam name="TKey">Getting type.</typeparam>
+        /// <param name="example">Specific example of getting the instance of TKey.</param>
+        /// <param name="args">Arguments needed for delegate creating TKey instance.</param>
+        /// <returns>TKey instance getting by specific example getting variant.</returns>
+        public TKey GetExample<TKey>(int example, params object[] args)
+        {
+            return (TKey)GetObject(typeof(TKey), example, args);
         }
 
         internal void BindByBinder(Key key, Type typeOfValue, Delegate creator, bool isExampleBind, bool isSingleton)
@@ -90,24 +153,11 @@ namespace SamopalIndustries
             _dict[key] = new Value_CoolDI(typeOfValue, creator, isSingleton);
         }
 
-        public TKey GetDefault<TKey>()
+        private Binder<TKey> GetBinder<TKey>(int example, bool isExampleBind, bool isSingleton)
         {
-            return (TKey)GetObject(typeof(TKey), 0, null);
-        }
+            Key key = new Key(typeof(TKey), example);
 
-        public TKey GetDefault<TKey>(params object[] args)
-        {
-            return (TKey)GetObject(typeof(TKey), 0, args);
-        }
-
-        public TKey GetExample<TKey>(int example)
-        {
-            return (TKey)GetObject(typeof(TKey), example, null);
-        }
-
-        public TKey GetExample<TKey>(int example, params object[] args)
-        {
-            return (TKey)GetObject(typeof(TKey), example, args);
+            return new Binder<TKey>(key, this, isExampleBind, isSingleton);
         }
 
         private object GetObject(Type keyType, int example, object[] args)
@@ -118,11 +168,12 @@ namespace SamopalIndustries
             {
                 if (InvokeUnbindedTypes)
                 {
-                    return GetByReflection(keyType);
+                    return GetObjectByReflection(keyType);
                 }
                 else
                 {
-                    throw new UnbindedTypeException($"You didn't do the {(example == 0 ? "default" : $"{example} specific example")} bind of {keyType.FullName}.");
+                    throw new UnbindedTypeException
+                        ($"You didn't do the {(example == 0 ? "default" : $"{example} specific example")} bind of {keyType.FullName} and InvokeUnbindedTypes property is set to \"false\".");
                 }
             }
 
@@ -142,15 +193,15 @@ namespace SamopalIndustries
         {
             if(value.Creator != null)
             {
-                return GetByDelegate(key, value, args);
+                return GetObjectByDelegate(key, value, args);
             }
             else
             {
-                return GetByReflection(value.Type);
+                return GetObjectByReflection(value.Type);
             }
         }
 
-        private object GetByDelegate(Key key, Value_CoolDI value, object[] args)
+        private object GetObjectByDelegate(Key key, Value_CoolDI value, object[] args)
         {
             try
             {
@@ -170,7 +221,7 @@ namespace SamopalIndustries
             }
         }
 
-        private object GetByReflection(Type type)
+        private object GetObjectByReflection(Type type)
         {
             if (type.IsAbstract)
             {
@@ -205,7 +256,7 @@ namespace SamopalIndustries
             ctors.Sort(CompareCtorInfo);
             ConstructorInfo result = null;
 
-            switch (LateBindingOption)
+            switch (BindedLateBindingOption)
             {
                 case LateBindingOptions.DefaultCtor:
                     result = ctors[0];
