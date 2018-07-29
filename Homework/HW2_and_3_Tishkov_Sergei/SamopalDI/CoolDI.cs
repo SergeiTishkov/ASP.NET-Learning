@@ -38,13 +38,25 @@ namespace SamopalIndustries
         /// Initializes a new instance of the CoolDI class by using the specified LateBindingOptions object.
         /// </summary>
         /// <param name="options">The kind of constructor that will be used in late binding process.</param>
-        public CoolDI(LateBindingOptions options)
+        public CoolDI(LateBindingOptions options) : this(options, false)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the CoolDI class by using the specified LateBindingOptions object.
+        /// </summary>
+        /// <param name="options">The kind of constructor that will be used in late binding process.</param>
+        /// <param name="invokeUnbindedTypes">Set "true" to get unbinded arguments of binded types constructors by reflection.</param>
+        public CoolDI(LateBindingOptions options, bool invokeUnbindedTypes)
         {
             LateBindingOption = options;
+            InvokeUnbindedTypes = invokeUnbindedTypes;
             _dict = new Dictionary<Key, Value_CoolDI>(new KeyComparer());
         }
 
         public LateBindingOptions LateBindingOption { get; set; }
+
+        public bool InvokeUnbindedTypes { get; set; }
 
         public Binder<TKey> BindDefaultAsSingleton<TKey>()
         {

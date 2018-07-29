@@ -41,7 +41,7 @@ namespace SamopalDITest
 
         // Testing of throwing exception
         // Must throw WrongParametersException because
-        // args wasn't used in invocation of di.GetDefault<IClass1>()
+        // parameter "args" wasn't used in invocation of di.GetDefault<IClass1>() and in binding of IClass4
         [TestMethod]
         public void CoolDISeeCommentsIntTest03()
         {
@@ -114,6 +114,16 @@ namespace SamopalDITest
             CoolDI di = new CoolDI();
 
             Assert.ThrowsException<ArgumentException>(() => di.BindExample<Class5>(0).ToSelf());
+        }
+
+        // Testing of throwing ArgumentException
+        // Must throw this exception because there wasn't binding of IClass3
+        [TestMethod]
+        public void CoolDISeeCommentsIntTest08()
+        {
+            CoolDI di = new CoolDI();
+
+            Assert.ThrowsException<ArgumentException>(() => di.GetDefault<Class3>());
         }
     }
 }
