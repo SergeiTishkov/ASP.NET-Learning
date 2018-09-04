@@ -8,7 +8,7 @@ using Ninject;
 namespace PlayerTest
 {
     [TestClass]
-    public class PlayerTest
+    public class PlayerTest 
     {
         [TestMethod]
         public void TestAttack()
