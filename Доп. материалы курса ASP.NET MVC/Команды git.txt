@@ -1,0 +1,13 @@
+git add *
+
+// git commit -m 'Message'
+git commit -m ''
+
+git status
+git commit 
+git push
+
+mkdir (название папки) создать директорию (папку)
+
+
+

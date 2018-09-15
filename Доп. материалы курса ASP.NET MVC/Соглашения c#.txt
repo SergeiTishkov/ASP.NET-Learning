@@ -1,0 +1,15 @@
+// * consts
+//   fields
+// * ctors
+// * props    i
+// * methids  i
+// * events   i
+// * private things
+// * ~
+// * 
+// * naming
+// * fields _camelCase == _camel_Case
+// * props CamelCase => noun
+// * methods CamelCaseDo => verb
+// * events OnCamelCase => verb (with time)
+// * vars camelCase
